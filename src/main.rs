@@ -1,6 +1,8 @@
 #[allow(unused_imports)]
 use std::io::{self, Write};
 use std::process;
+use std::env;
+use std::fs;
 
 const BUILTINS: [&str; 3] = ["exit", "echo", "type"];
 
@@ -14,9 +16,28 @@ fn type_check(arguments: &[&str]) {
     } else {
         if BUILTINS.contains(&arguments[0]) {
             println!("{} is a shell builtin", arguments[0]);
-        } else {
-            println!("{}: not found", arguments [0]);
+            return;
         }
+
+        let paths: Vec<std::path::PathBuf> = env::split_paths(&env::var_os("PATH").expect("Couldn't retrieve PATH")).collect();
+
+        for path in paths {
+            if !path.exists() {
+                continue;
+            }
+
+            let files: fs::ReadDir = fs::read_dir(path.clone()).expect("Failed to read path");
+            for file in files {
+                let dir_entry = file.expect("Failed to get directory entry");
+                let file_name = dir_entry.file_name().into_string().expect("Failed to convert OsString to String");
+                if file_name == arguments[0] {
+                    println!("{} is {}", arguments[0], dir_entry.path().to_str().expect("AHHHHH"));
+                    return;
+                }
+            }
+        }
+
+        println!("{}: not found", arguments [0]);
     }
 }
 
