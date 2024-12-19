@@ -6,6 +6,27 @@ use std::fs;
 
 const BUILTINS: [&str; 3] = ["exit", "echo", "type"];
 
+fn find_path_if_exists(file_to_find: &str) -> String {
+    let paths: Vec<std::path::PathBuf> = env::split_paths(&env::var_os("PATH").expect("Couldn't retrieve PATH")).collect();
+
+    for path in paths {
+        if !path.exists() {
+            continue;
+        }
+
+        let files: fs::ReadDir = fs::read_dir(path.clone()).expect("Failed to read path");
+        for file in files {
+            let dir_entry = file.expect("Failed to get directory entry");
+            let file_name = dir_entry.file_name().into_string().expect("Failed to convert OsString to String");
+            if file_name == file_to_find {
+                return dir_entry.path().to_str().expect("AHHHHH").to_string();
+            }
+        }
+    }
+
+    return "".to_string();
+}
+
 fn echo(arguments: &[&str]) {
     println!("{0}", arguments.join(" "));
 }
@@ -19,26 +40,34 @@ fn type_check(arguments: &[&str]) {
             return;
         }
 
-        let paths: Vec<std::path::PathBuf> = env::split_paths(&env::var_os("PATH").expect("Couldn't retrieve PATH")).collect();
+        let found_file = find_path_if_exists(arguments[0]);
 
-        for path in paths {
-            if !path.exists() {
-                continue;
-            }
-
-            let files: fs::ReadDir = fs::read_dir(path.clone()).expect("Failed to read path");
-            for file in files {
-                let dir_entry = file.expect("Failed to get directory entry");
-                let file_name = dir_entry.file_name().into_string().expect("Failed to convert OsString to String");
-                if file_name == arguments[0] {
-                    println!("{} is {}", arguments[0], dir_entry.path().to_str().expect("AHHHHH"));
-                    return;
-                }
-            }
+        if found_file != "".to_string() {
+            println!("{} is {}", arguments[0], found_file);
+            return;
         }
 
         println!("{}: not found", arguments [0]);
     }
+}
+
+fn try_run(arguments: &[&str]) {
+    let found_file = find_path_if_exists(arguments[0]);
+
+    if found_file == "".to_string() {
+        println!("{0}: command not found", arguments[0]);
+        return;
+    }
+
+    let mut command = process::Command::new(found_file);
+
+    for i in 1..arguments.len() {
+        command.arg(arguments[i]);
+    }
+
+    let output = command.output().expect("Failed to execute process");
+
+    print!("{}", String::from_utf8(output.stdout).unwrap());
 }
 
 fn main() {
@@ -59,7 +88,7 @@ fn main() {
                 "exit" => process::exit(0),
                 "echo" => echo(&arguments[1..]),
                 "type" => type_check(&arguments[1..]),
-                &_ => println!("{0}: command not found", input.trim()),
+                &_ => try_run(&arguments),
             }
         }
     }
