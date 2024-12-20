@@ -68,6 +68,7 @@ fn try_run(arguments: &[&str]) {
     let output = command.output().expect("Failed to execute process");
 
     print!("{}", String::from_utf8(output.stdout).unwrap());
+    print!("{}", String::from_utf8(output.stderr).unwrap());
 }
 
 fn main() {
