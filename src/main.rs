@@ -4,7 +4,7 @@ use std::process;
 use std::env;
 use std::fs;
 
-const BUILTINS: [&str; 4] = ["exit", "echo", "type", "PWD"];
+const BUILTINS: [&str; 4] = ["exit", "echo", "type", "pwd"];
 
 fn find_path_if_exists(file_to_find: &str) -> String {
     let paths: Vec<std::path::PathBuf> = env::split_paths(&env::var_os("PATH").expect("Couldn't retrieve PATH")).collect();
