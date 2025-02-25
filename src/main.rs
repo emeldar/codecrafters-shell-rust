@@ -83,12 +83,14 @@ fn cd(cwd: &mut PathBuf, arguments: &[&str]) {
 
     let new_path = if path_change.starts_with('/') {
         PathBuf::from(path_change)
-    } else {
+    } else if path_change.starts_with("~") {
         cwd.clone()
+    } else {
+        cwd.join(path_change)
     };
 
     if new_path.exists() && new_path.is_dir() {
-        *cwd = new_path;
+        *cwd = new_path.canonicalize().unwrap();
     } else {
         println!("cd: {path_change}: No such file or directory");
     }
