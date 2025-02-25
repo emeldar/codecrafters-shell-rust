@@ -100,6 +100,36 @@ fn cd(cwd: &mut PathBuf, arguments: &[&str]) {
     }
 }
 
+fn parse_args(input: &str) -> Vec<String> {
+    let mut args = vec![];
+    let mut single_quote = false;
+    let mut current_arg = String::new();
+
+    for c in input.chars() {
+        match c {
+            '\'' => single_quote = !single_quote,
+            ' ' => {
+                if single_quote {
+                    current_arg.push(c);
+                } else {
+                    if !current_arg.is_empty() {
+                        args.push(current_arg);
+                    }
+
+                    current_arg = String::new();
+                }
+            }
+            _ => {
+                current_arg.push(c);
+            }
+        }
+    }
+
+    args.push(current_arg);
+
+    return args;
+}
+
 fn main() {
     let mut cwd = env::current_dir().unwrap();
 
@@ -112,7 +142,8 @@ fn main() {
         let mut input = String::new();
         stdin.read_line(&mut input).unwrap();
 
-        let arguments: Vec<_> = input.trim().split(" ").filter(|s| !s.is_empty()).collect();
+        let arguments = parse_args(&input.trim());
+        let arguments: Vec<&str> = arguments.iter().map(|s| &**s).collect();
 
         if arguments.len() > 0 {
             // Cover builtins
