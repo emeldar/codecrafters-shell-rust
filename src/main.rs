@@ -84,7 +84,11 @@ fn cd(cwd: &mut PathBuf, arguments: &[&str]) {
     let new_path = if path_change.starts_with('/') {
         PathBuf::from(path_change)
     } else if path_change.starts_with("~") {
-        cwd.clone()
+        PathBuf::from(
+            env::var("HOME")
+                .map(|home| path_change.replacen('~', &home, 1))
+                .unwrap_or_else(|_| path_change.to_string())
+        )
     } else {
         cwd.join(path_change)
     };
