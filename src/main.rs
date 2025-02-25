@@ -59,7 +59,7 @@ fn try_run(arguments: &[&str]) {
         return;
     }
 
-    let mut command = process::Command::new(found_file);
+    let mut command = process::Command::new(arguments[0]);
 
     for i in 1..arguments.len() {
         command.arg(arguments[i]);
