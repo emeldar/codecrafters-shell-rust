@@ -104,26 +104,46 @@ fn parse_args(input: &str) -> Vec<String> {
     let mut args = vec![];
     let mut single_quote = false;
     let mut double_quote = false;
+    let mut escaped = false;
     let mut current_arg = String::new();
 
     for c in input.chars() {
         match c {
             '\'' => {
-                if double_quote {
+                if escaped {
+                    current_arg.push(c);
+                    escaped = !escaped;
+                } else if double_quote {
                     current_arg.push(c);
                 } else {
                     single_quote = !single_quote;
                 }
             },
             '\"' => {
-                if single_quote {
+                if escaped {
+                    current_arg.push(c);
+                    escaped = !escaped;
+                } else if single_quote {
                     current_arg.push(c);
                 } else {
                     double_quote = !double_quote;
                 }
             },
-            ' ' => {
+            '\\' => {
                 if single_quote || double_quote {
+                    current_arg.push(c);
+                } else if escaped {
+                    current_arg.push(c);
+                    escaped = !escaped;
+                } else {
+                    escaped = !escaped;
+                }
+            }
+            ' ' => {
+                if escaped {
+                    current_arg.push(c);
+                    escaped = !escaped;
+                } else if single_quote || double_quote {
                     current_arg.push(c);
                 } else {
                     if !current_arg.is_empty() {
