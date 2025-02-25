@@ -4,7 +4,7 @@ use std::process;
 use std::env;
 use std::fs;
 
-const BUILTINS: [&str; 3] = ["exit", "echo", "type"];
+const BUILTINS: [&str; 4] = ["exit", "echo", "type", "PWD"];
 
 fn find_path_if_exists(file_to_find: &str) -> String {
     let paths: Vec<std::path::PathBuf> = env::split_paths(&env::var_os("PATH").expect("Couldn't retrieve PATH")).collect();
@@ -71,6 +71,13 @@ fn try_run(arguments: &[&str]) {
     print!("{}", String::from_utf8(output.stderr).unwrap());
 }
 
+fn pwd() {
+    let current_dir = env::current_dir().unwrap();
+    let current_dir = current_dir.display();
+
+    println!("{current_dir}");
+}
+
 fn main() {
     loop {
         print!("$ ");
@@ -89,6 +96,7 @@ fn main() {
                 "exit" => process::exit(0),
                 "echo" => echo(&arguments[1..]),
                 "type" => type_check(&arguments[1..]),
+                "pwd" => pwd(),
                 &_ => try_run(&arguments),
             }
         }
