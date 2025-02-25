@@ -1,5 +1,6 @@
 #[allow(unused_imports)]
 use std::io::{self, Write};
+use std::path::PathBuf;
 use std::process;
 use std::env;
 use std::fs;
@@ -71,14 +72,31 @@ fn try_run(arguments: &[&str]) {
     print!("{}", String::from_utf8(output.stderr).unwrap());
 }
 
-fn pwd() {
-    let current_dir = env::current_dir().unwrap();
-    let current_dir = current_dir.display();
+fn pwd(cwd: &PathBuf) {
+    let current_dir = cwd.display();
 
     println!("{current_dir}");
 }
 
+fn cd(cwd: &mut PathBuf, arguments: &[&str]) {
+    let path_change = arguments[0];
+
+    let new_path = if path_change.starts_with('/') {
+        PathBuf::from(path_change)
+    } else {
+        cwd.clone()
+    };
+
+    if new_path.exists() && new_path.is_dir() {
+        *cwd = new_path;
+    } else {
+        println!("cd: {path_change}: No such file or directory");
+    }
+}
+
 fn main() {
+    let mut cwd = env::current_dir().unwrap();
+
     loop {
         print!("$ ");
         io::stdout().flush().unwrap();
@@ -96,7 +114,8 @@ fn main() {
                 "exit" => process::exit(0),
                 "echo" => echo(&arguments[1..]),
                 "type" => type_check(&arguments[1..]),
-                "pwd" => pwd(),
+                "pwd" => pwd(&cwd),
+                "cd" => cd(&mut cwd, &arguments[1..]),
                 &_ => try_run(&arguments),
             }
         }
